@@ -264,13 +264,17 @@ namespace NetSwitch
             if (wifiManage.GetCurrentConnection() == "")
             {
                 notifyIcon1.Text = "有线连接";
-                MenuLAN.Enabled = false;
-                MenuWifi.Enabled = true;
+                MenuLAN.Text = "内网*";
+                MenuWifi.Text = "切换到外网";
             }
             else
             {
-                MenuLAN.Enabled = true;
-                MenuWifi.Enabled = false;
+
+                MenuLAN.Text = "切换到内网";
+                MenuWifi.Text = "外网*";
+
+                //MenuLAN.Enabled = true;
+                //MenuWifi.Enabled = false;
                 if (wifiManage.getNetStatus())
 
                     notifyIcon1.Text = "Wifi连接(联网)";

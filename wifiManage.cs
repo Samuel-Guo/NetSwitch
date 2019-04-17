@@ -78,7 +78,6 @@ namespace NetSwitch
 
         public static List<WIFISSID> ScanAllSSID()
         {
-            WlanClient client = new WlanClient();
             List<WIFISSID> wifiList = new List<WIFISSID>();
             string conectedNetworkName = string.Empty;
             foreach (WlanClient.WlanInterface wlanIface in client.Interfaces)
@@ -135,7 +134,6 @@ namespace NetSwitch
         public static Dictionary<string,string> ListWifiXml()
         {
             Dictionary<string, string> wifiList = new Dictionary<string, string>();
-            WlanClient client = new WlanClient();
             foreach (WlanClient.WlanInterface wlanIface in client.Interfaces)
             {
                 // Lists all networks with WEP security
@@ -179,10 +177,11 @@ namespace NetSwitch
             public bool securityEnabled;
             public bool connected = false;
         }
+        private static WlanClient client=new WlanClient();
 
         public static string GetCurrentConnection()
         {
-            WlanClient client = new WlanClient();
+            
             foreach (WlanClient.WlanInterface wlanIface in client.Interfaces)
             {
                 Wlan.WlanAvailableNetwork[] networks = wlanIface.GetAvailableNetworkList(0);
@@ -194,7 +193,7 @@ namespace NetSwitch
                     }
                 }
             }
-
+            
             return string.Empty;
         }
         /// <summary> 
