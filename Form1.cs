@@ -17,6 +17,8 @@ namespace NetSwitch
             InitializeComponent();
         }
 
+        bool IsOnline = false;
+        bool IsWifi = false;
         class Cmds
         {
 
@@ -59,11 +61,11 @@ namespace NetSwitch
         public static bool Delay(double delaySecond)
         {
             DateTime now = DateTime.Now;
-            long s;
+            double s;
             do
             {
                 TimeSpan spand = DateTime.Now - now;
-                s = spand.Milliseconds;
+                s = spand.TotalMilliseconds;
                 Application.DoEvents();
             }
             while (s < delaySecond*1000);
@@ -72,6 +74,7 @@ namespace NetSwitch
 
         private void Form1_Load(object sender, EventArgs e)
         {
+
             this.Visible = false;
             this.ShowInTaskbar = false;
             AsyncGetNetStatus();
@@ -140,6 +143,7 @@ namespace NetSwitch
             //GetNetStatus();
             //if (e.Button == MouseButtons.Right)
             //{
+            
                 contextMenuStrip1.Show();
             //}
 
@@ -155,7 +159,7 @@ namespace NetSwitch
 
         private void 切换到内网ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notifyIcon1.ShowBalloonTip(4000, "提示", "切换中...", ToolTipIcon.Info);
+            notifyIcon1.ShowBalloonTip(2000, "提示", "切换中...", ToolTipIcon.Info);
 
             List<Cmds> cmds = new List<Cmds>();
             cmds.Add(new Cmds("netsh",@"interface set interface ""VMware Network Adapter VMnet1"" enabled",true));
@@ -178,15 +182,15 @@ namespace NetSwitch
             catch (Exception ex)
             {
 
-                notifyIcon1.ShowBalloonTip(4000, "提示", ex.Message, ToolTipIcon.Error);
+                notifyIcon1.ShowBalloonTip(2000, "提示", ex.Message, ToolTipIcon.Error);
             }
-            notifyIcon1.ShowBalloonTip(4000, "提示", "已成功切换到内网！", ToolTipIcon.Info );
+            notifyIcon1.ShowBalloonTip(2000, "提示", "已成功切换到内网！", ToolTipIcon.Info );
 
         }
 
         private void 切换到外网ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notifyIcon1.ShowBalloonTip(4000, "提示", "切换中...", ToolTipIcon.Info);
+            notifyIcon1.ShowBalloonTip(2000, "提示", "切换中...", ToolTipIcon.Info);
 
             List<Cmds> cmds = new List<Cmds>();
             cmds.Add(new Cmds("netsh", @"interface set interface ""WLAN"" enable"));
@@ -198,50 +202,71 @@ namespace NetSwitch
             //netsh interface set interface "eth" enabled
             //netsh interface set interface "WLAN" disabled")
             //  var ree = RunSyncAndGetResults("netsh");
-            try
+            int retry = 0;
+            while (true)
             {
-                foreach (var item in cmds)
+                try
                 {
-                    var re = RunSyncAndGetResults(item.exepath, item.args);
-                    Delay(0.5);
-                }
-
-            }
-            catch (Exception ex)
-            {
-
-                notifyIcon1.ShowBalloonTip(4000, "提示", ex.Message, ToolTipIcon.Error);
-            }
-            notifyIcon1.ShowBalloonTip(4000, "提示", "已成功切换到外网！", ToolTipIcon.Info);
-
-            Delay(1);
-            if (wifiManage.GetCurrentConnection() == "NARI-5G" || wifiManage.GetCurrentConnection() == "NARI")
-                return;
-
-            var wifilist= wifiManage.ScanAllSSID();
-            foreach (var item in wifilist)
-            {
-                if((item.profileNames== "NARI-5G" || item.profileNames == "NARI"))
-                {
-                    var xmllist = wifiManage.ListWifiXml();
-                    foreach (var item2 in xmllist)
+                    foreach (var item in cmds)
                     {
-                        if (item2.Key == "NARI-5G" || item2.Key == "NARI")
-                        {
-                            wifiManage.connectViaXml(item,item2.Key,item2.Value);
-                            notifyIcon1.ShowBalloonTip(5000, "提示", "连接"+item2.Key+"成功！", ToolTipIcon.Info);
-
-                            break;
-                        }
+                        var re = RunSyncAndGetResults(item.exepath, item.args);
+                        Delay(0.5);
                     }
+                    notifyIcon1.ShowBalloonTip(2000, "提示", "已成功切换到外网！", ToolTipIcon.Info);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    retry++;
+                    notifyIcon1.ShowBalloonTip(2000, "提示", ex.Message, ToolTipIcon.Error);
 
+                    if (retry > 3)
+                    {
+                        notifyIcon1.ShowBalloonTip(2000, "提示", "重试" +retry+"次失败", ToolTipIcon.Error);
+
+                        break;
+                    }
                 }
             }
+            Delay(1);
+            var CurrentWifi = wifiManage.GetCurrentConnection();
+            if (CurrentWifi != "NARI-5G" && CurrentWifi != "NARI")
+            {
+                var wifilist = wifiManage.ScanAllSSID();
+                foreach (var item in wifilist)
+                {
+                    if ((item.profileNames == "NARI-5G" || item.profileNames == "NARI"))
+                    {
+                        var xmllist = wifiManage.ListWifiXml();
+                        foreach (var item2 in xmllist)
+                        {
+                            if (item2.Key == "NARI-5G" || item2.Key == "NARI")
+                            {
+                                if (wifiManage.connectViaXml(item, item2.Key, item2.Value))
+                                {
+                                    notifyIcon1.ShowBalloonTip(5000, "提示", "连接" + item2.Key + "成功！", ToolTipIcon.Info);
+
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+            }
+
+
+
+            if (!wifiManage.getNetStatus())
+                System.Diagnostics.Process.Start(@"C:\Program Files (x86)\iNode\iNode Client\iNode Client.exe", " -p 5020 -c 5021");
+
         }
         DateTime lastGetStatusTime;
         private void NotifyIcon1_MouseMove(object sender, MouseEventArgs e)
         {
             TimeSpan span = DateTime.Now - lastGetStatusTime;
+            this.SetText();
 
             if (span.TotalSeconds > 3)
             {
@@ -259,13 +284,23 @@ namespace NetSwitch
             //GetNetStatus();
         }
 
+
         private void GetNetStatus()
         {
-            if (wifiManage.GetCurrentConnection() == "")
+
+            IsWifi = (wifiManage.GetCurrentConnection() != "");
+            IsOnline = wifiManage.getNetStatus();
+
+        }
+
+        private bool SetText()
+        {
+            if (!IsWifi)
             {
                 notifyIcon1.Text = "有线连接";
                 MenuLAN.Text = "内网*";
                 MenuWifi.Text = "切换到外网";
+                return false;
             }
             else
             {
@@ -275,11 +310,16 @@ namespace NetSwitch
 
                 //MenuLAN.Enabled = true;
                 //MenuWifi.Enabled = false;
-                if (wifiManage.getNetStatus())
-
+                if (IsOnline)
+                {
                     notifyIcon1.Text = "Wifi连接(联网)";
+                    return true;
+                }
                 else
+                {
                     notifyIcon1.Text = "Wifi连接(未联网)";
+                    return false;
+                }
             }
         }
 
@@ -296,6 +336,11 @@ namespace NetSwitch
                 AsyncGetNetStatus();
                 //timetick++;
             }
+        }
+
+        private void Button1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
