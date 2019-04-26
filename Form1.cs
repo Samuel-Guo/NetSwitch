@@ -17,6 +17,8 @@ namespace NetSwitch
             InitializeComponent();
         }
 
+        readonly Cmds wifiE = new Cmds("netsh", @"interface set interface ""WLAN"" enable");
+
         bool IsOnline = false;
         bool IsWifi = false;
         class Cmds
@@ -107,7 +109,7 @@ namespace NetSwitch
 
             System.IO.StreamReader myOutput = listFiles.StandardOutput;
 
-            listFiles.WaitForExit(10000);
+            listFiles.WaitForExit(20000);
 
             if (listFiles.HasExited)
 
@@ -193,7 +195,7 @@ namespace NetSwitch
             notifyIcon1.ShowBalloonTip(2000, "提示", "切换中...", ToolTipIcon.Info);
 
             List<Cmds> cmds = new List<Cmds>();
-            cmds.Add(new Cmds("netsh", @"interface set interface ""WLAN"" enable"));
+            cmds.Add(wifiE);
             cmds.Add(new Cmds("netsh", @"interface set interface ""VMware Network Adapter VMnet1"" disable"));
             cmds.Add(new Cmds("netsh", @"interface set interface ""VMware Network Adapter VMnet8"" disable"));
             cmds.Add(new Cmds("netsh", @"interface set interface ""eth"" disable"));
@@ -266,11 +268,11 @@ namespace NetSwitch
         private void NotifyIcon1_MouseMove(object sender, MouseEventArgs e)
         {
             TimeSpan span = DateTime.Now - lastGetStatusTime;
-            this.SetText();
+            this.SetTextAndIcon();
 
             if (span.TotalSeconds > 3)
             {
-                timetick = -1;
+                timetick = 0;
 
                // GetNetStatus();
                 lastGetStatusTime = DateTime.Now;
@@ -293,49 +295,137 @@ namespace NetSwitch
 
         }
 
-        private bool SetText()
+        private bool SetTextAndIcon()
         {
-            if (!IsWifi)
+            if(IsWifi && IsOnline)
+            {
+                notifyIcon1.Text = "Wifi连接(联网)";
+                notifyIcon1.Icon = Resource1.WifiOn;
+                MenuLAN.Text = "切换到内网";
+                MenuWifi.Text = "外网*";
+
+                return true;
+            }
+            else if(IsWifi && !IsOnline)
+            {
+                notifyIcon1.Text = "Wifi连接";
+                notifyIcon1.Icon = Resource1.WifiOff;
+                MenuLAN.Text = "切换到内网";
+                MenuWifi.Text = "外网*";
+
+                return false;
+
+            }
+            else if (!IsWifi && IsOnline)
+            {
+                notifyIcon1.Text = "有线连接(联网)";
+                MenuLAN.Text = "内网*";
+                MenuWifi.Text = "切换到外网";
+                notifyIcon1.Icon = Resource1.LANOn;
+
+                return false;
+
+            }
+            else 
             {
                 notifyIcon1.Text = "有线连接";
                 MenuLAN.Text = "内网*";
                 MenuWifi.Text = "切换到外网";
+                notifyIcon1.Icon = Resource1.LANOff;
+
                 return false;
-            }
-            else
-            {
 
-                MenuLAN.Text = "切换到内网";
-                MenuWifi.Text = "外网*";
-
-                //MenuLAN.Enabled = true;
-                //MenuWifi.Enabled = false;
-                if (IsOnline)
-                {
-                    notifyIcon1.Text = "Wifi连接(联网)";
-                    return true;
-                }
-                else
-                {
-                    notifyIcon1.Text = "Wifi连接(未联网)";
-                    return false;
-                }
             }
+            //if (!IsWifi)
+            //{
+            //    notifyIcon1.Text = "有线连接";
+            //    MenuLAN.Text = "内网*";
+            //    MenuWifi.Text = "切换到外网";
+            //    return false;
+            //}
+            //else
+            //{
+
+            //    MenuLAN.Text = "切换到内网";
+            //    MenuWifi.Text = "外网*";
+
+            //    //MenuLAN.Enabled = true;
+            //    //MenuWifi.Enabled = false;
+            //    if (IsOnline)
+            //    {
+            //        notifyIcon1.Text = "Wifi连接(联网)";
+            //        return true;
+            //    }
+            //    else
+            //    {
+            //    }
+            //}
         }
 
         private int timetick;
         private void Timer1_Tick(object sender, EventArgs e)
         {
+            Console.WriteLine(timetick.ToString());
 
             timetick++;
-            if (timetick % 60==0)
+            if(timetick % 60 ==1)
+                SetTextAndIcon();
+
+            if (timetick % 60==10)
             {
                // timer1.Enabled = false;
                 //timetick = 0;
                 lastGetStatusTime = DateTime.Now;
                 AsyncGetNetStatus();
+                if (!IsOnline && timetick % 300 == 299)
+                {
+                    TrySamuel();
+                }
                 //timetick++;
             }
+        }
+
+        private void TrySamuel()
+        {
+            try
+            {
+                var re = RunSyncAndGetResults(wifiE.exepath, wifiE.args);
+
+                var CurrentWifi = wifiManage.GetCurrentConnection();
+                if (CurrentWifi != "Samuel")
+                {
+                    var wifilist = wifiManage.ScanAllSSID();
+                    foreach (var item in wifilist)
+                    {
+                        if (item.profileNames == "Samuel" )
+                        {
+                            var xmllist = wifiManage.ListWifiXml();
+                            foreach (var item2 in xmllist)
+                            {
+                                if (item2.Key == "Samuel")
+                                {
+                                    if (wifiManage.connectViaXml(item, item2.Key, item2.Value))
+                                    {
+                                        notifyIcon1.ShowBalloonTip(5000, "提示", "连接" + item2.Key + "成功！", ToolTipIcon.Info);
+
+                                        break;
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+
+            }
+            catch (Exception)
+            {
+
+               // throw;
+            }
+            Delay(0.5);
+
         }
 
         private void Button1_Click(object sender, EventArgs e)
