@@ -282,8 +282,13 @@ namespace NetSwitch
         private void AsyncGetNetStatus()
         {
             Action handler = new Action(GetNetStatus);
-            handler.BeginInvoke(null, null);
+            handler.BeginInvoke(CallDone, null);
             //GetNetStatus();
+        }
+
+        private void CallDone(IAsyncResult asyncResult)
+        {
+            timetick = 0;
         }
 
 
