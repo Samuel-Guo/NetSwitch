@@ -143,11 +143,11 @@ namespace NetSwitch
         private void NotifyIcon1_MouseClick(object sender, MouseEventArgs e)
         {
             //GetNetStatus();
-            //if (e.Button == MouseButtons.Right)
-            //{
-            
+            if (e.Button == MouseButtons.Right)
+            {
+
                 contextMenuStrip1.Show();
-            //}
+            }
 
 
             //if (e.Button == MouseButtons.Left)
@@ -436,6 +436,18 @@ namespace NetSwitch
         private void Button1_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void NotifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if(IsWifi)
+            {
+                切换到内网ToolStripMenuItem_Click(sender, e);
+            }
+            else
+            {
+                切换到外网ToolStripMenuItem_Click(sender, e);
+            }
         }
     }
 }
