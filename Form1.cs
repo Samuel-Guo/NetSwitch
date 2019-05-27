@@ -214,12 +214,14 @@ namespace NetSwitch
                         var re = RunSyncAndGetResults(item.exepath, item.args);
                         Delay(0.5);
                     }
-                    notifyIcon1.ShowBalloonTip(2000, "提示", "已成功切换到外网！", ToolTipIcon.Info);
+                    notifyIcon1.ShowBalloonTip(2000, "网卡启用", "已成功启用无线网卡！", ToolTipIcon.Info);
                     break;
                 }
                 catch (Exception ex)
                 {
                     retry++;
+                    Delay(0.5);
+
                     notifyIcon1.ShowBalloonTip(2000, "提示", ex.Message, ToolTipIcon.Error);
 
                     if (retry > 3)
@@ -231,34 +233,45 @@ namespace NetSwitch
                 }
             }
             Delay(1);
-            var CurrentWifi = wifiManage.GetCurrentConnection();
-            if (CurrentWifi != "NARI-5G" && CurrentWifi != "NARI")
+            try
             {
-                var wifilist = wifiManage.ScanAllSSID();
-                foreach (var item in wifilist)
+                var CurrentWifi = wifiManage.GetCurrentConnection();
+                if (CurrentWifi != "NARI-5G" && CurrentWifi != "NARI")
                 {
-                    if ((item.profileNames == "NARI-5G" || item.profileNames == "NARI"))
+                    var wifilist = wifiManage.ScanAllSSID();
+                    foreach (var item in wifilist)
                     {
-                        var xmllist = wifiManage.ListWifiXml();
-                        foreach (var item2 in xmllist)
+                        if ((item.profileNames == "NARI-5G" || item.profileNames == "NARI"))
                         {
-                            if (item2.Key == "NARI-5G" || item2.Key == "NARI")
+                            var xmllist = wifiManage.ListWifiXml();
+                            foreach (var item2 in xmllist)
                             {
-                                if (wifiManage.connectViaXml(item, item2.Key, item2.Value))
+                                if (item2.Key == "NARI-5G" || item2.Key == "NARI")
                                 {
-                                    notifyIcon1.ShowBalloonTip(5000, "提示", "连接" + item2.Key + "成功！", ToolTipIcon.Info);
+                                    if (wifiManage.connectViaXml(item, item2.Key, item2.Value))
+                                    {
+                                        notifyIcon1.ShowBalloonTip(5000, "无线连接", "连接" + item2.Key + "成功！", ToolTipIcon.Info);
 
-                                    break;
+                                        break;
+                                    }
                                 }
                             }
+
                         }
-
                     }
+
                 }
-
             }
-
-
+            catch (Exception ex )
+            {
+                if (ex.HResult == -2147467259)
+                {
+                    notifyIcon1.ShowBalloonTip(2000, "无线连接", "无线网络开关未打开，连接失败！", ToolTipIcon.Error);
+                    return;
+                }
+                else
+                    throw;
+            }
 
             if (!wifiManage.getNetStatus())
                 System.Diagnostics.Process.Start(@"C:\Program Files (x86)\iNode\iNode Client\iNode Client.exe", " -p 5020 -c 5021");
@@ -294,7 +307,7 @@ namespace NetSwitch
 
         private void GetNetStatus()
         {
-
+           // notifyIcon1.Icon = Resource1.netfol;
             IsWifi = (wifiManage.GetCurrentConnection() != "");
             IsOnline = wifiManage.getNetStatus();
 

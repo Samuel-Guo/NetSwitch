@@ -124,6 +124,9 @@
   <data name="LANOn" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\QuickDisplay1.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="netfol" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>netfol.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="WifiOff" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\lupdate0.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

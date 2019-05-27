@@ -181,20 +181,31 @@ namespace NetSwitch
 
         public static string GetCurrentConnection()
         {
-            
-            foreach (WlanClient.WlanInterface wlanIface in client.Interfaces)
+            try
             {
-                Wlan.WlanAvailableNetwork[] networks = wlanIface.GetAvailableNetworkList(0);
-                foreach (Wlan.WlanAvailableNetwork network in networks)
+                foreach (WlanClient.WlanInterface wlanIface in client.Interfaces)
                 {
-                    if (wlanIface.InterfaceState == Wlan.WlanInterfaceState.Connected && wlanIface.CurrentConnection.isState == Wlan.WlanInterfaceState.Connected)
+                    Wlan.WlanAvailableNetwork[] networks = wlanIface.GetAvailableNetworkList(0);
+                    foreach (Wlan.WlanAvailableNetwork network in networks)
                     {
-                        return wlanIface.CurrentConnection.profileName;
+                        if (wlanIface.InterfaceState == Wlan.WlanInterfaceState.Connected && wlanIface.CurrentConnection.isState == Wlan.WlanInterfaceState.Connected)
+                        {
+                            return wlanIface.CurrentConnection.profileName;
+                        }
                     }
                 }
+                return string.Empty;
+
+
             }
-            
-            return string.Empty;
+            catch (Exception)
+            {
+
+                return string.Empty;
+
+            }
+
+
         }
         /// <summary> 
         /// 连接到无线网络
