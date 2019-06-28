@@ -11,8 +11,6 @@ namespace NetSwitch
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
 #if (!DEBUG)
 
             /**
@@ -26,8 +24,19 @@ namespace NetSwitch
             if (principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator))
             {
 #endif
-                //如果是管理员，则直接运行
-                Application.Run(new Form1());
+            //如果是管理员，则直接运行
+
+
+            if (System.Diagnostics.Process.GetProcessesByName(System.Diagnostics.Process.GetCurrentProcess().ProcessName).Length > 1)
+            {
+                MessageBox.Show("Already running!");
+                return;
+            }
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
+
+
 #if (!DEBUG)
         }
             else

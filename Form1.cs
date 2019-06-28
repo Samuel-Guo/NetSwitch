@@ -272,11 +272,13 @@ namespace NetSwitch
                 else
                     throw;
             }
+            Delay(1);
 
             if (!wifiManage.getNetStatus())
                 System.Diagnostics.Process.Start(@"C:\Program Files (x86)\iNode\iNode Client\iNode Client.exe", " -p 5020 -c 5021");
 
         }
+
         DateTime lastGetStatusTime;
         private void NotifyIcon1_MouseMove(object sender, MouseEventArgs e)
         {
